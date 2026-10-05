@@ -1,6 +1,9 @@
 #include <stdio.h>
 
+void auditoria_memoria(void);
+
 int main(void) {
-    printf("[MEMORIA] Auditoria de ciclo de carga y librerias en Red Hat\n");
+    printf("[USER SPACE] Iniciando proceso principal...\n");
+    auditoria_memoria();
     return 0;
 }

@@ -8,34 +8,46 @@ echo "    Lineas de auditoria.c: $(wc -l < auditoria.c) | Lineas de auditoria.i:
 
 echo "[+] Fase 1: Compilacion a Assembler (gcc -S -> auditoria.s)"
 gcc -S auditoria.i -o auditoria.s
-echo "    Primeras instrucciones de CPU generadas:"
-head -n 12 auditoria.s
+echo "    Instrucciones generadas en Assembler:"
+grep -E "pushq|movq|call" auditoria.s | head -n 4
 
-echo "[+] Fase 2: Ensamblado a Codigo Objeto (gcc -c -> auditoria.o)"
+echo "[+] Fase 2: Ensamblado a Codigo Objeto (gcc -c)"
 gcc -c auditoria.s -o auditoria.o
-file auditoria.o
-
-echo "[+] Fase 3: Enlace Dinamico - Modulo de Carga (gcc -> auditoria_dinamico)"
-gcc auditoria.o -o auditoria_dinamico
-./auditoria_dinamico
+gcc -c -fPIC modulo.c -o modulo.o
+file auditoria.o modulo.o
 
 echo ""
 echo "============================================================"
-echo " 2. ENLACE ESTATICO VS. ENLACE DINAMICO (IMPACTO EN MEMORIA)"
+echo " 2. GENERACION DE BIBLIOTECAS: ESTATICA (.a) VS COMPARTIDA (.so)"
 echo "============================================================"
-echo "[+] Compilando modulo de carga estatico..."
-gcc -static auditoria.c -o auditoria_estatico
+# Crear biblioteca estatica (.a)
+ar rcs libmodulo.a modulo.o
+echo "[+] Biblioteca estatica creada: libmodulo.a"
 
-echo "[+] Comparacion de peso fisico en disco (ls -lh):"
-ls -lh auditoria_dinamico auditoria_estatico
+# Crear biblioteca dinamica compartida (.so)
+gcc -shared -o libmodulo.so modulo.o
+echo "[+] Biblioteca compartida dinamica creada: libmodulo.so"
+
+echo ""
+echo "============================================================"
+echo " 3. ENLACE Y COMPARACION EN DISCO / MEMORIA"
+echo "============================================================"
+# Enlace estatico incorporando libmodulo.a
+gcc auditoria.o libmodulo.a -o binario_estatico
+
+# Enlace dinamico referenciando libmodulo.so
+gcc auditoria.o -L. -lmodulo -Wl,-rpath,. -o binario_dinamico
+
+echo "[+] Comparacion de archivos generados (ls -lh):"
+ls -lh binario_estatico binario_dinamico libmodulo.so libmodulo.a
 
 echo ""
 echo "============================================================"
-echo " 3. INSPECCION DE DEPENDENCIAS Y CARGA DINAMICA"
+echo " 4. AUDITORIA DE DEPENDENCIAS Y CARGA DINAMICA EN RAM"
 echo "============================================================"
-echo "[+] Dependencias dinamicas del ejecutable (ldd):"
-ldd ./auditoria_dinamico
+echo "[+] Dependencias dinamicas (ldd binario_dinamico):"
+ldd ./binario_dinamico
 
 echo ""
-echo "[+] Syscalls del cargador para mapear la biblioteca compartida (strace):"
-strace -e openat ./auditoria_dinamico
+echo "[+] Ejecucion del binario dinamico con syscalls (strace):"
+strace -e openat ./binario_dinamico
