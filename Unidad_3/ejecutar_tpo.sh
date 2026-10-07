@@ -4,7 +4,7 @@ echo " COMPILANDO EL SIMULADOR EN C CON GCC (RED HAT)"
 echo "============================================================"
 gcc simulador_memoria.c -o simulador_memoria
 if [ $? -ne 0 ]; then
-    echo "[ERROR] Fallo en la compilacion."
+    echo "[ERROR] Fallo critico en la compilacion."
     exit 1
 fi
 echo "[OK] Binario 'simulador_memoria' generado con exito."
