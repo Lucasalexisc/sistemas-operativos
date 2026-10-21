@@ -272,179 +272,101 @@ El programa modela una partición de almacenamiento con bloques de datos y un ma
 
 ```c
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define CANT_HUECOS 5
 #define CANT_ARCHIVOS 4
 
-// Estructura para representar un archivo en el sistema de archivos simulado
-typedef struct {
-    char nombre[32];
-    int bloques_requeridos;
-    int asignado;           // 1 si fue asignado, 0 si fue rechazado
-    int bloque_inicio;      // Para Asignación Contigua
-    int hueco_asignado;     // Índice del hueco contiguo asignado (-1 si rechazado)
-    int bloques_indexados[CANT_HUECOS]; // Bloques tomados de cada hueco en Asignación Indexada
-} ArchivoFS;
-
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        printf("Uso: %s [F|B|I]\n", argv[0]);
-        printf("  F: Asignacion Contigua con Primer Ajuste (First-Fit)\n");
-        printf("  B: Asignacion Contigua con Mejor Ajuste (Best-Fit)\n");
-        printf("  I: Asignacion Indexada con Nodos-i (Esquema Red Hat ext4)\n");
+        printf("Uso: %s [F|B|I] (F: First-Fit Contiguo, B: Best-Fit Contiguo, I: Inodos Linux)\n", argv[0]);
         return 1;
     }
 
     char modo = argv[1][0];
-    if (modo != 'F' && modo != 'f' && modo != 'B' && modo != 'b' && modo != 'I' && modo != 'i') {
-        printf("[ERROR]: Modo no valido. Seleccione F, B o I.\n");
-        return 1;
-    }
-
-    // Huecos de bloques libres disponibles en la particion de almacenamiento
+    // Bloques libres en el disco (5 huecos separados, total = 1700 bloques)
     int huecos[CANT_HUECOS] = {100, 500, 200, 300, 600};
-    int huecos_iniciales[CANT_HUECOS];
-    memcpy(huecos_iniciales, huecos, sizeof(huecos));
+    // Tamano de los 4 archivos que queremos guardar en el disco (en bloques)
+    int archivos[CANT_ARCHIVOS] = {212, 417, 112, 426};
+    int asignacion[CANT_ARCHIVOS] = {-1, -1, -1, -1};
 
-    // Definición de archivos corporativos entrantes
-    ArchivoFS archivos[CANT_ARCHIVOS] = {
-        {"catalogo_productos.db", 212, 0, -1, -1, {0}},
-        {"multimedia_assets.tar", 417, 0, -1, -1, {0}},
-        {"auditoria_sistema.log", 112, 0, -1, -1, {0}},
-        {"backup_transaccional.iso", 426, 0, -1, -1, {0}}
-    };
-
-    printf("========================================================================\n");
-    printf("   SIMULADOR DE SISTEMA DE ARCHIVOS - ASIGNACION DE BLOQUES EN DISCO    \n");
-    printf("========================================================================\n");
-
+    printf("============================================================\n");
     if (modo == 'F' || modo == 'f') {
-        printf(" MODO: ASIGNACION CONTIGUA - PRIMER AJUSTE (FIRST-FIT)\n");
-        printf(" Logica: Se exige un segmento de bloques continuos. Se toma el PRIMERO.\n");
+        printf(" MODO [F]: ASIGNACION CONTIGUA - PRIMER AJUSTE (FIRST-FIT)\n");
+        printf(" Regla: Todo el archivo debe entrar junto en un solo hueco.\n");
     } else if (modo == 'B' || modo == 'b') {
-        printf(" MODO: ASIGNACION CONTIGUA - MEJOR AJUSTE (BEST-FIT)\n");
-        printf(" Logica: Se exige bloques continuos. Se toma el hueco mas ajustado.\n");
+        printf(" MODO [B]: ASIGNACION CONTIGUA - MEJOR AJUSTE (BEST-FIT)\n");
+        printf(" Regla: Todo el archivo entra junto en el hueco mas justo.\n");
     } else {
-        printf(" MODO: ASIGNACION INDEXADA CON NODOS-I (INODES - RED HAT LINUX ext4)\n");
-        printf(" Logica: No exige contigüidad. El Inodo mapea bloques libres dispersos.\n");
+        printf(" MODO [I]: ASIGNACION CON INODOS (COMO USA LINUX EXT4)\n");
+        printf(" Regla: El archivo se puede repartir en varios huecos libres.\n");
     }
-    printf("========================================================================\n\n");
+    printf("============================================================\n\n");
 
-    // 1. Mostrar estado inicial de los bloques libres en disco
-    int espacio_libre_inicial = 0;
-    printf("[MAPA DE ESPACIO LIBRE EN DISCO - ESTADO INICIAL]\n");
-    for (int j = 0; j < CANT_HUECOS; j++) {
-        printf("  Segmento Libre %d: %4d bloques consecutivos disponibles\n", j + 1, huecos[j]);
-        espacio_libre_inicial += huecos[j];
-    }
-    printf("  Capacidad total disponible en particion: %d bloques (o KB)\n\n", espacio_libre_inicial);
-
-    // 2. Mostrar archivos a persistir
-    int espacio_solicitado = 0;
-    printf("[COLA DE ARCHIVOS CORPORATIVOS A ALMACENAR]\n");
-    for (int i = 0; i < CANT_ARCHIVOS; i++) {
-        printf("  Archivo F%d [%-24s]: %4d bloques requeridos\n", 
-               i + 1, archivos[i].nombre, archivos[i].bloques_requeridos);
-        espacio_solicitado += archivos[i].bloques_requeridos;
-    }
-    printf("  Espacio total requerido por archivos:    %d bloques\n", espacio_solicitado);
-    printf("------------------------------------------------------------------------\n\n");
-
-    // 3. Ejecución del Algoritmo Seleccionado
+    // 1. Ejecucion segun el modo elegido
     if (modo == 'F' || modo == 'f') {
-        // Asignación Contigua First-Fit
         for (int i = 0; i < CANT_ARCHIVOS; i++) {
             for (int j = 0; j < CANT_HUECOS; j++) {
-                if (huecos[j] >= archivos[i].bloques_requeridos) {
-                    archivos[i].asignado = 1;
-                    archivos[i].hueco_asignado = j;
-                    huecos[j] -= archivos[i].bloques_requeridos;
-                    break; // Corta en el primero que encuentra
+                if (huecos[j] >= archivos[i]) {
+                    asignacion[i] = j;
+                    huecos[j] -= archivos[i];
+                    break; // Corta en el primer hueco donde entra
                 }
             }
         }
     } else if (modo == 'B' || modo == 'b') {
-        // Asignación Contigua Best-Fit
         for (int i = 0; i < CANT_ARCHIVOS; i++) {
-            int mejor_idx = -1;
+            int mejor = -1;
             for (int j = 0; j < CANT_HUECOS; j++) {
-                if (huecos[j] >= archivos[i].bloques_requeridos) {
-                    if (mejor_idx == -1 || huecos[j] < huecos[mejor_idx]) {
-                        mejor_idx = j;
+                if (huecos[j] >= archivos[i]) {
+                    if (mejor == -1 || huecos[j] < huecos[mejor]) {
+                        mejor = j;
                     }
                 }
             }
-            if (mejor_idx != -1) {
-                archivos[i].asignado = 1;
-                archivos[i].hueco_asignado = mejor_idx;
-                huecos[mejor_idx] -= archivos[i].bloques_requeridos;
+            if (mejor != -1) {
+                asignacion[i] = mejor;
+                huecos[mejor] -= archivos[i];
             }
         }
-    } else {
-        // Asignación Indexada con Nodos-i (Inodes)
-        // Cada archivo puede tomar bloques de cualquier hueco libre del bitmap
+    } else if (modo == 'I' || modo == 'i') {
+        // Modo Inodos: cada archivo toma bloques de cualquier hueco libre disponible
         for (int i = 0; i < CANT_ARCHIVOS; i++) {
-            int pendientes = archivos[i].bloques_requeridos;
-            for (int j = 0; j < CANT_HUECOS && pendientes > 0; j++) {
+            int falta_guardar = archivos[i];
+            for (int j = 0; j < CANT_HUECOS && falta_guardar > 0; j++) {
                 if (huecos[j] > 0) {
-                    int tomar = (huecos[j] >= pendientes) ? pendientes : huecos[j];
-                    archivos[i].bloques_indexados[j] = tomar;
-                    huecos[j] -= tomar;
-                    pendientes -= tomar;
+                    int usar = (huecos[j] >= falta_guardar) ? falta_guardar : huecos[j];
+                    huecos[j] -= usar;
+                    falta_guardar -= usar;
                 }
             }
-            if (pendientes == 0) {
-                archivos[i].asignado = 1;
+            if (falta_guardar == 0) {
+                asignacion[i] = 99; // 99 = Guardado con exito usando un Inodo
             }
         }
     }
 
-    // 4. Reporte de Resultados de Asignación de Archivos
-    printf("[REPORTE DE ASIGNACION EN EL SISTEMA DE ARCHIVOS]\n");
-    printf("%-4s %-25s %-10s %-18s %s\n", "ID", "Nombre Archivo", "Tamano", "Ubicacion", "Estado");
-    printf("------------------------------------------------------------------------\n");
+    // 2. Mostrar resultados
+    printf("[RESULTADO AL GUARDAR LOS ARCHIVOS EN EL DISCO]\n");
+    printf("Archivo\t\tTamano\t\tEstado en el Disco\n");
     for (int i = 0; i < CANT_ARCHIVOS; i++) {
-        printf("F%d   %-25s %4d blk   ", i + 1, archivos[i].nombre, archivos[i].bloques_requeridos);
-        if (archivos[i].asignado) {
-            if (modo == 'I' || modo == 'i') {
-                printf("Inodo #%04d (Indexado)  EXITO: Bloques dispersos\n", 1000 + i);
-            } else {
-                printf("Segmento %d (Contiguo)  EXITO: Bloques reservados\n", archivos[i].hueco_asignado + 1);
-            }
+        printf("Archivo %d\t%d bloques\t", i + 1, archivos[i]);
+        if (asignacion[i] == 99) {
+            printf("GUARDADO (Inodo repartio los bloques en huecos libres)\n");
+        } else if (asignacion[i] != -1) {
+            printf("GUARDADO en Hueco %d (Contiguo)\n", asignacion[i] + 1);
         } else {
-            printf("Ninguno            FALLO: ENOSPC (Frag. Externa)\n");
+            printf("ERROR: NO ENTRA (Falta espacio contiguo!)\n");
         }
     }
 
-    // 5. Análisis del Estado Final de los Bloques Libres en Disco
-    printf("\n[ESTADO FINAL DE LOS BLOQUES LIBRES EN PARTICION]\n");
-    int espacio_libre_remanente = 0;
+    // 3. Mostrar cuanto espacio libre quedo en el disco
+    int total_libre = 0;
+    printf("\n[ESPACIO LIBRE QUE QUEDO EN CADA HUECO DEL DISCO]\n");
     for (int j = 0; j < CANT_HUECOS; j++) {
-        printf("  Segmento %d: %4d bloques libres restantes\n", j + 1, huecos[j]);
-        espacio_libre_remanente += huecos[j];
+        printf("Hueco %d: %d bloques libres\n", j + 1, huecos[j]);
+        total_libre += huecos[j];
     }
-    printf("  Total de bloques libres remanentes en disco: %d bloques\n", espacio_libre_remanente);
-    printf("------------------------------------------------------------------------\n");
-
-    // 6. Conclusión de Diagnóstico Forense
-    if ((modo == 'F' || modo == 'f') && archivos[3].asignado == 0) {
-        printf("\n[EVIDENCIA CIENTIFICA DE FRAGMENTACION EXTERNA EN DISCO]:\n");
-        printf("  - El archivo 'backup_transaccional.iso' requeria 426 bloques contiguos.\n");
-        printf("  - El disco poseia un total de %d bloques libres (mas del doble).\n", espacio_libre_remanente);
-        printf("  - Falla: El hueco contiguo mas grande remanente mide solo 300 bloques.\n");
-        printf("  - Conclusion: La Asignacion Contigua sufre de Fragmentacion Externa.\n");
-    } else if (modo == 'I' || modo == 'i') {
-        printf("\n[DEMOSTRACION DEL ESQUEMA INDEXADO EXT4 DE RED HAT LINUX]:\n");
-        printf("  - El Inodo recolecto 426 bloques dispersos entre los distintos huecos libres:\n");
-        for (int j = 0; j < CANT_HUECOS; j++) {
-            if (archivos[3].bloques_indexados[j] > 0) {
-                printf("    * Tomo %d bloques del Segmento %d\n", archivos[3].bloques_indexados[j], j + 1);
-            }
-        }
-        printf("  - Resultado: 100%% de archivos persistidos sin compactar el disco.\n");
-    }
+    printf("-> Total de espacio libre sobrante en el disco: %d bloques\n", total_libre);
 
     return 0;
 }
@@ -454,86 +376,43 @@ int main(int argc, char *argv[]) {
 
 ### 3.3 Código 2: `ejecutar_tpo.sh` (Script Orquestador en Bash)
 
-Este script en Bash automatiza el ciclo completo: compila el simulador en C, ejecuta y compara los tres algoritmos midiendo tiempos y outputs, y finalmente realiza una auditoría forense en consola utilizando comandos nativos de Red Hat (`stat`, `ls -li`, `df -h`, `df -i`, `file`).
+Este script en Bash automatiza el ciclo completo: compila el simulador en C, ejecuta y compara los tres algoritmos (`F`, `B` e `I`), y finalmente inspecciona un inodo real y su número mágico utilizando comandos nativos de Red Hat (`ls -li`, `stat`, `file`).
 
 ```bash
 #!/bin/bash
 # ==============================================================================
-# SCRIPT DE AUTOMATIZACION Y AUDITORIA - TRABAJO PRACTICO OBLIGATORIO UNIDAD 4
-# SISTEMAS OPERATIVOS (UADE) - RED HAT ENTERPRISE LINUX
+# SCRIPT DE DEMOSTRACION - UNIDAD 4 (SISTEMA DE ARCHIVOS)
 # ==============================================================================
 
-echo "========================================================================"
-echo " 1. COMPILACION DEL SIMULADOR DEL SISTEMA DE ARCHIVOS (GCC EN RED HAT)"
-echo "========================================================================"
-gcc -Wall -O2 simulador_filesystem.c -o simulador_filesystem
+echo "--- 1. COMPILANDO EL SIMULADOR DE DISCO ---"
+gcc simulador_filesystem.c -o simulador_filesystem
 if [ $? -ne 0 ]; then
-    echo "[ERROR FATAL]: Fallo critico durante la compilacion de simulador_filesystem.c"
+    echo "[ERROR]: Fallo la compilacion."
     exit 1
 fi
-echo "[OK]: Compilacion exitosa. Binario 'simulador_filesystem' generado."
+echo "[OK]: Compilado correctamente."
 echo ""
 
-echo "========================================================================"
-echo " 2. EJECUCION: ASIGNACION CONTIGUA CON PRIMER AJUSTE (FIRST-FIT)"
-echo "========================================================================"
+echo "--- 2. PRUEBA CON ASIGNACION CONTIGUA (FIRST-FIT) ---"
 ./simulador_filesystem F
 echo ""
 
-echo "========================================================================"
-echo " 3. EJECUCION: ASIGNACION CONTIGUA CON MEJOR AJUSTE (BEST-FIT)"
-echo "========================================================================"
+echo "--- 3. PRUEBA CON ASIGNACION CONTIGUA (BEST-FIT) ---"
 ./simulador_filesystem B
 echo ""
 
-echo "========================================================================"
-echo " 4. EJECUCION: ASIGNACION INDEXADA CON NODOS-I (INODES - EXT4 RED HAT)"
-echo "========================================================================"
+echo "--- 4. SOLUCION LINUX: ASIGNACION CON INODOS (EXT4) ---"
 ./simulador_filesystem I
 echo ""
 
-echo "========================================================================"
-echo " 5. COMPARATIVA DE TIEMPOS DE ASIGNACION (BENCHMARKING)"
-echo "========================================================================"
-echo "--- Tiempo Asignacion Contigua (First-Fit) ---"
-time ./simulador_filesystem F > /dev/null
+echo "--- 5. VIENDO UN INODO REAL EN LINUX (ls -li y stat) ---"
+ls -li simulador_filesystem.c
 echo ""
-echo "--- Tiempo Asignacion Indexada (Nodos-i ext4) ---"
-time ./simulador_filesystem I > /dev/null
+stat simulador_filesystem.c
 echo ""
-
-echo "========================================================================"
-echo " 6. AUDITORIA FORENSE CON HERRAMIENTAS NATIVAS DE CONSOLA DE RED HAT"
-echo "========================================================================"
-
-# Generar archivo de prueba para auditar inodos y bloques reales en Linux
-TEST_FILE="prueba_inodo.dat"
-echo "Creando archivo de prueba con dd para auditar metadatos en ext4..."
-dd if=/dev/urandom of=$TEST_FILE bs=4096 count=3 status=none
-
-echo "--- 6.1 Auditoria de Inodo y Bloques Fisicos con 'stat' ---"
-stat $TEST_FILE
-echo ""
-
-echo "--- 6.2 Visualizacion del Numero de Inodo en Directorio con 'ls -li' ---"
-ls -li $TEST_FILE
-echo ""
-
-echo "--- 6.3 Auditoria de Espacio Libre en Bloques y en Inodos ('df -h' y 'df -i') ---"
-df -h .
-echo ""
-df -i .
-echo ""
-
-echo "--- 6.4 Verificacion de Numero Magico y Tipo de Archivo con 'file' ---"
-file $TEST_FILE
+echo "--- 6. VIENDO EL TIPO DE ARCHIVO POR NUMERO MAGICO (file) ---"
 file simulador_filesystem.c
 file simulador_filesystem
-echo ""
-
-# Limpieza del archivo de prueba
-rm -f $TEST_FILE
-echo "[OK]: Auditoria forense finalizada y archivos temporales liberados."
 ```
 
 ---
