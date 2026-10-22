@@ -11,6 +11,7 @@ El repositorio está dividido en **6 carpetas principales** (`unidad_1` a `unida
 
 ```text
 sistemas-operativos/
+├── DOCUMENTO_FINAL_TPO_UNIDADES_1_A_6.md # Documento único con las 6 unidades para presentar al profesor
 ├── preparar_todo.sh               # Script que da permisos (+x) a todo y verifica gcc/strace
 ├── menu_tpo.sh                    # Menú interactivo opcional para correr cualquier unidad (1 a 6)
 ├── .gitignore                     # Ignora binarios compilados para evitar conflictos en git pull
@@ -106,10 +107,11 @@ Dentro de cada carpeta de unidad vas a encontrar siempre la misma lógica ordena
 
 ---
 
-### 🔹 6. `unidad_6/` — Seguridad en Sistemas Operativos
+### 🔹 6. `unidad_6/` — Seguridad en Sistemas Operativos (2 Opciones de Laboratorio)
 - **Scripts ejecutables:**
-  - [`pagos_empresa.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/pagos_empresa.sh): Script legítimo que simula las transferencias bancarias de la empresa.
-  - [`ejecutar_tpo.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/ejecutar_tpo.sh): Implementa el **Comprobador de Integridad (`sumacomp`)** con `sha256sum -c`. Verifica el archivo sano, simula la inyección de un **virus**, detecta el cambio en el Hash SHA-256 bloqueando la ejecución, y audita los permisos y **ACLs (`ls -l` y `getfacl`)**.
+  - [`ejecutar_tpo.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/ejecutar_tpo.sh): Menú selector que permite correr cualquiera de las 2 opciones preparadas para mostrar al profesor:
+  - [`opcion1_servers_remotos.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/opcion1_servers_remotos.sh): **Opción 1 (Multi-servidor `servera` y `serverb`):** Prueba conectividad (`ping`), bloquea el puerto `8080/tcp` en el Firewall de `servera` (`firewall-cmd`), lo abre en `serverb`, crea el usuario `auditor` mostrando su **Hash + Salt en `/etc/shadow`** y le da acceso exclusivo con **ACL (`setfacl`/`getfacl`)**.
+  - [`opcion2_local_completo.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/opcion2_local_completo.sh): **Opción 2 (En un solo servidor):** Ejecuta la demostración de puertos (`ss -tuln`), Firewall (`firewall-cmd`), usuario `auditor` (`/etc/shadow`), permisos **ACL** y el **Comprobador de Integridad Anti-Virus (`sha256sum -c`)** sobre [`pagos_empresa.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/pagos_empresa.sh).
 - **Carpeta `Documentacion/`:**
   - [`DOCUMENTACION_UNIDAD_6.md`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/Documentacion/DOCUMENTACION_UNIDAD_6.md) | [`PASO_A_PASO_UNIDAD_6.md`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/Documentacion/PASO_A_PASO_UNIDAD_6.md) | [`SPEECH_DEFENSA_UNIDAD_6.md`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/Documentacion/SPEECH_DEFENSA_UNIDAD_6.md)
 - **Carpeta `Archivos de unidad/`:**

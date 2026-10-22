@@ -1,7 +1,17 @@
 # GUÍA PASO A PASO: EJECUCIÓN UNIDAD 6 EN RED HAT ENTERPRISE LINUX (RHEL)
-## SEGURIDAD — COMPROBADOR DE INTEGRIDAD (`sumacomp` / `sha256sum`) Y PERMISOS ACL
+## SEGURIDAD — 2 OPCIONES LISTAS PARA MOSTRAR AL PROFESOR
 
-Esta guía contiene los comandos para actualizar el repositorio desde GitHub y explicar el ejercicio de la Unidad 6 de forma súper simple (igual que el de la Unidad 1, usando dos scripts cortos en Bash).
+En la carpeta `unidad_6` tenés **las 2 opciones listas** para mostrar la semana que viene en el laboratorio de Red Hat:
+
+- **Opción 1 (`opcion1_servers_remotos.sh`):** Usa los servidores del laboratorio (`workstation`, `servera` y `serverb`):
+  1. Verifica cómo se conectan por red (`ping` a `servera` y `serverb`).
+  2. Configura el **Firewall (`firewall-cmd`)**: **bloquea** el puerto `8080/tcp` en `servera` y lo **abre** en `serverb`, probando desde `workstation` que `servera` rechaza la conexión y `serverb` la permite.
+  3. Crea el usuario autorizado `auditor` (`useradd`), muestra su contraseña cifrada con **Hash + Salt en `/etc/shadow`** y le da permiso exclusivo a un archivo secreto usando **ACL (`setfacl` y `getfacl`)**.
+- **Opción 2 (`opcion2_local_completo.sh`):** Funciona en **un solo servidor** (ideal si `servera` o `serverb` no están prendidos):
+  1. Muestra los puertos abiertos (`ss -tuln`) y cómo abrir/bloquear el puerto `8080/tcp` en el Firewall local (`firewall-cmd`).
+  2. Crea el usuario `auditor` y muestra su **Hash + Salt en `/etc/shadow`**.
+  3. Le asigna permisos exclusivos con **ACL (`setfacl` / `getfacl`)**.
+  4. Ejecuta además el **Comprobador de Integridad Anti-Virus (`sha256sum -c`)** sobre `pagos_empresa.sh`.
 
 ---
 
@@ -10,32 +20,26 @@ Esta guía contiene los comandos para actualizar el repositorio desde GitHub y e
 ```bash
 cd ~/sistemas-operativos
 git pull origin main
+./preparar_todo.sh
 cd unidad_6
 ```
 
 ---
 
-## 2. Ejecutar el Script en Red Hat
+## 2. Cómo Ejecutar Cualquiera de las 2 Opciones
+
+Podés correr el lanzador principal `./ejecutar_tpo.sh` (que te pregunta cuál de las 2 opciones querés mostrar):
 
 ```bash
-chmod +x ejecutar_tpo.sh pagos_empresa.sh
 ./ejecutar_tpo.sh
 ```
 
----
+O ejecutar directamente la opción que elijas con el profesor:
 
-## 3. ¿Cómo funciona el ejercicio explicado súper simple?
+```bash
+# Para mostrar la Opción 1 (con servera y serverb):
+./opcion1_servers_remotos.sh
 
-Este ejercicio implementa exactamente el **"Comprobador de Integridad (`sumacomp`)"** que está en la **página 44 del PDF oficial de la Unidad 6**:
-
-1. **El Programa de la Empresa (`pagos_empresa.sh`):**
-   - Es un script de 4 líneas que simula hacer las transferencias bancarias de sueldos de la empresa.
-2. **Paso 1 — Le sacamos su "Huella Digital" (`sha256sum`):**
-   - Cuando sabemos que el programa está limpio, calculamos su **Hash SHA-256** (una función de una vía) y lo guardamos en el archivo `sumacomp.txt`.
-3. **Paso 2 — Verificación antes de ejecutar (`sha256sum -c sumacomp.txt`):**
-   - Antes de correr el programa, el script compara su huella actual contra `sumacomp.txt`. Como nadie lo tocó, dice **`pagos_empresa.sh: La suma coincide`** y lo ejecuta normalmente.
-4. **Paso 3 y 4 — Un Virus modifica el archivo y el Comprobador lo bloquea:**
-   - Simulamos que un **virus o intruso activo** le agrega una línea maliciosa adentro a `pagos_empresa.sh` (`echo "[VIRUS]: Robando contrasenas..." >> pagos_empresa.sh`).
-   - Cuando nuestro script vuelve a verificar con `sha256sum -c sumacomp.txt`, como el archivo cambió aunque sea en una línea, **su huella digital cambió por completo**. Dice **`La suma no coincide`** y **cancela la ejecución del virus**.
-5. **Paso 5 — Permisos y Lista de Control de Acceso (`ls -l` y `getfacl`):**
-   - Muestra cómo está protegido el archivo en Linux para que otros usuarios no puedan tocarlo (`chmod 750` y `getfacl`).
+# Para mostrar la Opción 2 (todo en un mismo servidor):
+./opcion2_local_completo.sh
+```
