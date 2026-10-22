@@ -8,6 +8,8 @@
 
 int main() {
     int fd = open("salida_rapida.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0) return 1; // Validamos que el archivo se abrio correctamente
+
     char bufer[4000];
     memset(bufer, 'A', 4000); // Llenamos el bufer con 4000 letras 'A'
 

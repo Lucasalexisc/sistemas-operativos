@@ -3,12 +3,12 @@
 # SCRIPT DE DEMOSTRACION - UNIDAD 6 (SEGURIDAD, INTEGRIDAD HASH Y PERMISOS)
 # ==============================================================================
 
-# Aseguramos que el programa de pagos empiece limpio y con permisos seguros
-cat << 'EOF' > pagos_empresa.sh
-#!/bin/bash
-echo "[SISTEMA DE PAGOS]: Conectando con el banco..."
-echo "[SISTEMA DE PAGOS]: Transferencia de sueldos realizada con exito."
-EOF
+# Validamos que exista el programa de pagos y tenga permisos seguros
+if [ ! -f pagos_empresa.sh ]; then
+    echo "[ERROR]: No se encontro pagos_empresa.sh"
+    exit 1
+fi
+sed -i '/VIRUS/d' pagos_empresa.sh
 chmod 750 pagos_empresa.sh
 
 echo "--- 1. GUARDANDO LA HUELLA DIGITAL (HASH SHA-256) EN 'sumacomp.txt' ---"

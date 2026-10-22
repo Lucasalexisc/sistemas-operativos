@@ -120,6 +120,7 @@ unidad_5/
 
 int main() {
     int fd = open("salida_lenta.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0) return 1; // Validamos que el archivo se abrio correctamente
 
     printf("[SIN BUFER]: Escribiendo 100.000 letras de a 1 byte por vez...\n");
     for (int i = 0; i < 100000; i++) {
@@ -147,6 +148,8 @@ int main() {
 
 int main() {
     int fd = open("salida_rapida.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0) return 1; // Validamos que el archivo se abrio correctamente
+
     char bufer[4000];
     memset(bufer, 'A', 4000); // Llenamos el bufer con 4000 letras 'A'
 
@@ -172,8 +175,11 @@ int main() {
 # ==============================================================================
 
 echo "--- 1. COMPILANDO LOS DOS PROGRAMAS EN C ---"
-gcc sin_bufer.c -o sin_bufer
-gcc con_bufer.c -o con_bufer
+gcc sin_bufer.c -o sin_bufer && gcc con_bufer.c -o con_bufer
+if [ $? -ne 0 ]; then
+    echo "[ERROR]: Fallo la compilacion."
+    exit 1
+fi
 echo "[OK]: Compilados 'sin_bufer' y 'con_bufer'."
 echo ""
 

@@ -1,0 +1,16 @@
+# Binarios compilados en C generados al correr los scripts en Red Hat
+unidad_2/carrera
+unidad_2/seguro
+unidad_3/simulador_memoria
+unidad_4/simulador_filesystem
+unidad_5/sin_bufer
+unidad_5/con_bufer
+
+# Archivos temporales de prueba
+unidad_2/resultado_carrera.txt
+unidad_4/prueba_inodo.dat
+unidad_5/salida_lenta.txt
+unidad_5/salida_rapida.txt
+unidad_6/sumacomp.txt
+*.o
+*.out

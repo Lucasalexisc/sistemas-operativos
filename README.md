@@ -11,6 +11,9 @@ El repositorio está dividido en **6 carpetas principales** (`unidad_1` a `unida
 
 ```text
 sistemas-operativos/
+├── preparar_todo.sh               # Script que da permisos (+x) a todo y verifica gcc/strace
+├── menu_tpo.sh                    # Menú interactivo opcional para correr cualquier unidad (1 a 6)
+├── .gitignore                     # Ignora binarios compilados para evitar conflictos en git pull
 ├── Consignas TPO.md / .pdf        # Pautas formales de entrega y defensa del TPO
 ├── unidad_1/                      # Unidad 1: Introducción a los SO y Llamadas al Sistema (Syscalls)
 ├── unidad_2/                      # Unidad 2: Procesos, Hilos, Concurrencia y Semáforos (Mutex)
@@ -127,9 +130,21 @@ Dentro de cada carpeta de unidad vas a encontrar siempre la misma lógica ordena
    git pull origin main
    ```
 
-2. **Entrar a cualquier unidad y ejecutar su demostración:**
+2. **Preparar permisos de todos los scripts de una sola vez:**
    ```bash
-   cd unidad_X            # Reemplazar por unidad_1, unidad_2, ..., unidad_6
-   chmod +x *.sh
-   ./ejecutar_tpo.sh      # (En unidad_1 es ./audit_syscalls.sh y en unidad_2 es ./demostracion_tpo.sh)
+   chmod +x preparar_todo.sh menu_tpo.sh
+   ./preparar_todo.sh
    ```
+   *(Nota: Los archivos `.c` no necesitan `chmod +x` porque son código fuente en texto plano; el compilador `gcc` le da permisos de ejecución automáticamente al binario cuando lo compila).*
+
+3. **Ejecutar cualquier unidad (2 formas a elección):**
+   - **Forma A — Entrando a la carpeta de la unidad:**
+     ```bash
+     cd unidad_X            # Reemplazar por unidad_1, unidad_2, ..., unidad_6
+     ./ejecutar_tpo.sh      # (En unidad_1 es ./audit_syscalls.sh y en unidad_2 es ./demostracion_tpo.sh)
+     ```
+   - **Forma B (Opcional) — Usando el menú rápido desde la raíz:**
+     ```bash
+     ./menu_tpo.sh          # Abre el menú interactivo para elegir del 1 al 6
+     # o directo: ./menu_tpo.sh 4
+     ```

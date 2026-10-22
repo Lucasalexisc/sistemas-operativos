@@ -7,6 +7,7 @@
 
 int main() {
     int fd = open("salida_lenta.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0) return 1; // Validamos que el archivo se abrio correctamente
 
     printf("[SIN BUFER]: Escribiendo 100.000 letras de a 1 byte por vez...\n");
     for (int i = 0; i < 100000; i++) {

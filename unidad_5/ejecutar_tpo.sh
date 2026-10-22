@@ -4,8 +4,11 @@
 # ==============================================================================
 
 echo "--- 1. COMPILANDO LOS DOS PROGRAMAS EN C ---"
-gcc sin_bufer.c -o sin_bufer
-gcc con_bufer.c -o con_bufer
+gcc sin_bufer.c -o sin_bufer && gcc con_bufer.c -o con_bufer
+if [ $? -ne 0 ]; then
+    echo "[ERROR]: Fallo la compilacion."
+    exit 1
+fi
 echo "[OK]: Compilados 'sin_bufer' y 'con_bufer'."
 echo ""
 
