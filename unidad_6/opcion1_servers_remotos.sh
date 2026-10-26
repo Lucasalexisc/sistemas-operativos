@@ -22,11 +22,11 @@ echo "========================================================================"
 echo " 2. FIREWALL EN RED HAT: BLOQUEAR PUERTO EN 'servera' Y ABRIR EN 'serverb'"
 echo "========================================================================"
 echo "-> [servera]: Bloqueando el puerto $PUERTO/tcp en el Firewall..."
-ssh student@servera "sudo firewall-cmd --remove-port=${PUERTO}/tcp >/dev/null 2>&1; sudo firewall-cmd --list-ports"
+ssh student@servera "echo student | sudo -S firewall-cmd --remove-port=${PUERTO}/tcp >/dev/null 2>&1; echo student | sudo -S firewall-cmd --list-ports 2>/dev/null"
 
 echo "-> [serverb]: Abriendo el puerto $PUERTO/tcp en el Firewall y levantando servicio..."
-ssh student@serverb "sudo firewall-cmd --add-port=${PUERTO}/tcp >/dev/null 2>&1; nohup python3 -m http.server $PUERTO >/dev/null 2>&1 &"
-sleep 1
+ssh student@serverb "echo student | sudo -S firewall-cmd --add-port=${PUERTO}/tcp >/dev/null 2>&1; echo student | sudo -S firewall-cmd --list-ports 2>/dev/null; nohup python3 -m http.server $PUERTO </dev/null >/dev/null 2>&1 &"
+sleep 2
 echo ""
 
 echo "--- PRUEBA DE CONEXION DESDE AFUERA AL PUERTO $PUERTO ---"
@@ -70,6 +70,4 @@ echo ""
 echo "-> Probando leer el archivo con el usuario 'auditor':"
 sudo su - auditor -c "cat $ARCHIVO"
 
-# Limpieza final del puerto de prueba en serverb y archivo temporal
-ssh student@serverb "pkill -f 'http.server $PUERTO'; sudo firewall-cmd --remove-port=${PUERTO}/tcp >/dev/null 2>&1" 2>/dev/null
 rm -f $ARCHIVO
