@@ -92,6 +92,7 @@ faccessat2(AT_FDCWD, "/etc/secure_app/transactions.dat", R_OK, AT_EACCESS) = -1 
 > **Explicación para el profesor:** Con `strace` descubrimos que el Kernel devolvió `-1 ENOENT` porque el archivo `/etc/secure_app/transactions.dat` no existe en esa ruta.
 
 `[INSERTAR CAPTURA DE PANTALLA DE LA CONSOLA RED HAT — UNIDAD 1]`
+<img width="1003" height="458" alt="image" src="https://github.com/user-attachments/assets/4a9f91ae-671c-439a-ba13-51ae5cd74dd7" />
 
 ---
 ---
