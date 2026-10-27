@@ -3,6 +3,16 @@
 # SCRIPT DE DEMOSTRACION - UNIDAD 5 (ENTRADA / SALIDA Y USO DE BUFER)
 # ==============================================================================
 
+if ! command -v gcc >/dev/null 2>&1 || ! command -v strace >/dev/null 2>&1; then
+    echo "============================================================"
+    echo " [ERROR]: 'gcc' o 'strace' no estan instalados en Red Hat."
+    echo " Para instalar todo automaticamente:"
+    echo "   cd .. && ./preparar_todo.sh"
+    echo " O manualmente: sudo dnf install -y --disablerepo='*ansible*' gcc strace"
+    echo "============================================================"
+    exit 1
+fi
+
 echo "--- 1. COMPILANDO LOS DOS PROGRAMAS EN C ---"
 gcc sin_bufer.c -o sin_bufer && gcc con_bufer.c -o con_bufer
 if [ $? -ne 0 ]; then

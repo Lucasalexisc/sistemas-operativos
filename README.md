@@ -12,7 +12,7 @@ El repositorio está dividido en **6 carpetas principales** (`unidad_1` a `unida
 ```text
 sistemas-operativos/
 ├── DOCUMENTO_FINAL_TPO_UNIDADES_1_A_6.md # Documento único con las 6 unidades para presentar al profesor
-├── preparar_todo.sh               # Script que da permisos (+x) a todo y verifica gcc/strace
+├── preparar_todo.sh               # Script integral: permisos (+x) por unidad, auto-reparación de repos e instalación de paquetes
 ├── menu_tpo.sh                    # Menú interactivo opcional para correr cualquier unidad (1 a 6)
 ├── .gitignore                     # Ignora binarios compilados para evitar conflictos en git pull
 ├── Consignas TPO.md / .pdf        # Pautas formales de entrega y defensa del TPO
@@ -132,12 +132,15 @@ Dentro de cada carpeta de unidad vas a encontrar siempre la misma lógica ordena
    git pull origin main
    ```
 
-2. **Preparar permisos de todos los scripts de una sola vez:**
+2. **Preparar entorno, permisos e instalar dependencias automáticamente:**
    ```bash
    chmod +x preparar_todo.sh menu_tpo.sh
    ./preparar_todo.sh
    ```
-   *(Nota: Los archivos `.c` no necesitan `chmod +x` porque son código fuente en texto plano; el compilador `gcc` le da permisos de ejecución automáticamente al binario cuando lo compila).*
+   *El script `preparar_todo.sh` se encarga de todo de forma automática:*
+   - *Otorga permisos `chmod +x` a los scripts de cada unidad indicando su función.*
+   - *Detecta y auto-repara repositorios huérfanos de Red Hat (evitando el error de `repomd.xml` en DNF).*
+   - *Verifica e instala con `sudo dnf` todas las herramientas necesarias (`gcc`, `strace`, `acl`, `file`), informando en pantalla para qué unidades sirve cada una.*
 
 3. **Ejecutar cualquier unidad (2 formas a elección):**
    - **Forma A — Entrando a la carpeta de la unidad:**
