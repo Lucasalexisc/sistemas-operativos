@@ -86,117 +86,165 @@ flowchart LR
 
 ---
 
-## 3. Arquitectura y Código de la Solución (2 Opciones de Laboratorio en Red Hat)
+## 3. Arquitectura y Código de la Solución en Red Hat
 
 ### 3.1 Estructura de Archivos de la Unidad 6
-```text
+`	ext
 unidad_6/
-├── ejecutar_tpo.sh                   # Lanzador principal: permite elegir entre la Opción 1 y la Opción 2
-├── opcion1_servers_remotos.sh        # Opción 1: Firewall entre servera (bloqueado) y serverb (abierto) + Usuario y ACL
-├── opcion2_local_completo.sh         # Opción 2: Demostración en un solo servidor (Firewall, Usuario, ACL y Hash SHA-256)
-├── pagos_empresa.sh                  # Script de pagos auditado por el comprobador de integridad
+├── ejecutar_tpo.sh                   # Script único: Firewall entre servera y serverb, Usuario /etc/shadow, ACL y Hash SHA-256
+├── pagos_empresa.sh                  # Script de pagos protegido y auditado por el comprobador de integridad
 ├── Documentacion/                    # Informe formal, Guía Paso a Paso y Speech de Defensa Oral
 └── Archivos de unidad/               # PDFs de cátedra y Cuestionario Resuelto (21 preguntas)
-```
+`
 
 ---
 
-### 3.2 Opción 1: `opcion1_servers_remotos.sh` (Con `servera` y `serverb` en Red Hat)
+### 3.2 Código Fuente de pagos_empresa.sh (El script crítico protegido)
 
-Este script demuestra en vivo la seguridad en red y el control de acceso entre las máquinas del laboratorio Red Hat (`workstation`, `servera` y `serverb`):
-1. **Conectividad de red:** Verifica cómo se conectan mediante `ping` a `servera` y `serverb`.
-2. **Firewall (`firewall-cmd`):** Bloquea el puerto `8080/tcp` en **`servera`** y lo habilita en **`serverb`**, comprobando que `servera` rechaza las conexiones externas mientras `serverb` las acepta.
-3. **Autenticación con Hash + Salt (`/etc/shadow`):** Crea el usuario autorizado `auditor` con `useradd` y muestra su entrada cifrada en `/etc/shadow`.
-4. **Lista de Control de Acceso (`setfacl` / `getfacl`):** Otorga permiso de lectura exclusivo al usuario `auditor` sobre un archivo confidencial (`chmod 600`) y comprueba el acceso con `su - auditor`.
-
-```bash
+`ash
 #!/bin/bash
 # ==============================================================================
-# UNIDAD 6 - OPCION 1: SEGURIDAD ENTRE SERVIDORES RED HAT (servera y serverb)
+# UNIDAD 6 - SCRIPT CRITICO DE LA EMPRESA (pagos_empresa.sh)
+# Simula la transferencia de sueldos de la empresa. Es el archivo que protegeremos
+# con permisos 750 y con un Comprobador de Integridad Criptografico (Hash SHA-256).
 # ==============================================================================
+echo "[SISTEMA DE PAGOS]: Conectando con el banco..."
+echo "[SISTEMA DE PAGOS]: Transferencia de sueldos realizada con exito."
+`
+
+---
+
+### 3.3 Código Fuente de ejecutar_tpo.sh (Demostración unificada de las 4 capas de seguridad)
+
+Este único script reúne en orden todas las demostraciones de seguridad en Red Hat:
+1. **Conectividad y Firewall entre servidores (servera y serverb):** Verifica la red con ping, bloquea el puerto 8080/tcp en **servera** y lo habilita en **serverb** con irewall-cmd, probando con curl que servera rechaza la conexión y serverb la permite.
+2. **Autenticación con Hash + Salt (/etc/shadow):** Crea el usuario uditor con useradd, le asigna contraseña con chpasswd y muestra su entrada cifrada en /etc/shadow.
+3. **Lista de Control de Acceso (setfacl / getfacl):** Cierra el archivo confidencial con chmod 600 y le otorga lectura exclusiva al usuario uditor mediante una ACL.
+4. **Comprobador de Integridad (sha256sum -c):** Registra la huella SHA-256 de pagos_empresa.sh en sumacomp.txt, autoriza la ejecución cuando está sano, simula la inyección de una línea maliciosa y demuestra cómo el comprobador detecta el cambio de hash y bloquea la ejecución antes de restaurar el archivo original.
+
+`ash
+#!/bin/bash
+# ==============================================================================
+# UNIDAD 6 - DEMOSTRACION COMPLETA DE SEGURIDAD EN RED HAT (ejecutar_tpo.sh)
+# Reune en un unico script las 4 capas de seguridad:
+#   1) Red y Firewall entre servidores (ping, ssh y firewall-cmd en servera y serverb)
+#   2) Creacion del usuario 'auditor' y contrasena con Hash + Salt en /etc/shadow
+#   3) Control de Acceso con ACL (setfacl / getfacl) sobre un archivo confidencial
+#   4) Comprobador de Integridad con Hash SHA-256 (sha256sum -c) ante un virus
+# ==============================================================================
+
 PUERTO=8080
 
-echo "--- 1. VERIFICANDO CONECTIVIDAD DE RED CON 'servera' Y 'serverb' ---"
+echo "========================================================================"
+echo " 1. CONECTIVIDAD Y FIREWALL ENTRE SERVIDORES ('servera' Y 'serverb')"
+echo "========================================================================"
+# 'ping -c 2' envia 2 paquetes para comprobar que ambos servidores responden en la red
+echo "-> Probando conexion de red con servera y serverb:"
 ping -c 2 servera
+echo ""
 ping -c 2 serverb
+echo ""
 
-echo "--- 2. FIREWALL: BLOQUEAR PUERTO EN 'servera' Y ABRIR EN 'serverb' ---"
-ssh student@servera "sudo firewall-cmd --remove-port=${PUERTO}/tcp >/dev/null 2>&1; sudo firewall-cmd --list-ports"
-ssh student@serverb "sudo firewall-cmd --add-port=${PUERTO}/tcp >/dev/null 2>&1; nohup python3 -m http.server $PUERTO >/dev/null 2>&1 &"
-sleep 1
+# Nos conectamos por SSH a 'servera' y cerramos el puerto 8080/tcp en su Firewall
+echo "-> [servera]: Bloqueando el puerto $PUERTO/tcp en el Firewall..."
+ssh student@servera "echo student | sudo -S firewall-cmd --remove-port=${PUERTO}/tcp >/dev/null 2>&1; echo student | sudo -S firewall-cmd --list-ports 2>/dev/null"
 
+# Nos conectamos por SSH a 'serverb', abrimos el puerto 8080/tcp y levantamos un servidor web de prueba
+echo "-> [serverb]: Abriendo el puerto $PUERTO/tcp en el Firewall y levantando servicio..."
+ssh student@serverb "echo student | sudo -S firewall-cmd --add-port=${PUERTO}/tcp >/dev/null 2>&1; echo student | sudo -S firewall-cmd --list-ports 2>/dev/null; nohup python3 -m http.server $PUERTO </dev/null >/dev/null 2>&1 &"
+sleep 2
+echo ""
+
+echo "--- PRUEBA DE CONEXION AL PUERTO $PUERTO ---"
+# 'curl' intenta conectarse por HTTP al puerto 8080 de ambos servidores:
+# En 'servera' falla porque su Firewall bloquea el puerto; en 'serverb' entra porque esta permitido.
 echo "1) Intentando conectar a servera:$PUERTO (Puerto BLOQUEADO por Firewall):"
 if curl -s --connect-timeout 2 http://servera:$PUERTO >/dev/null; then
     echo "   [OK]: Conectado a servera."
 else
-    echo "   [BLOQUEADO]: El Firewall de 'servera' rechazo la conexion al puerto $PUERTO!"
+    echo "   [BLOQUEADO]: El Firewall de 'servera' rechazo la conexion al puerto $PUERTO."
 fi
 
 echo "2) Intentando conectar a serverb:$PUERTO (Puerto HABILITADO en Firewall):"
 if curl -s --connect-timeout 2 http://serverb:$PUERTO >/dev/null; then
-    echo "   [PERMITIDO]: Conexion exitosa con 'serverb' en el puerto $PUERTO!"
+    echo "   [PERMITIDO]: Conexion exitosa con 'serverb' en el puerto $PUERTO."
+else
+    echo "   [AVISO]: No se pudo conectar a serverb:$PUERTO."
 fi
+echo ""
 
-echo "--- 3. CREACION DE USUARIO AUTORIZADO ('auditor') Y HASH+SALT EN /etc/shadow ---"
+echo "========================================================================"
+echo " 2. CREACION DE USUARIO ('auditor') Y CONTRASENA CON HASH EN /etc/shadow"
+echo "========================================================================"
+# 'useradd -m' crea el usuario 'auditor' con su carpeta personal (/home/auditor)
 sudo useradd -m auditor 2>/dev/null
+# 'chpasswd' asigna la contrasena; Linux guarda su Hash + Salt en /etc/shadow
 echo "auditor:RedHat2026" | sudo chpasswd
+echo "[OK]: Usuario 'auditor' creado. Contrasena guardada como Hash + Salt en /etc/shadow:"
 sudo grep "^auditor:" /etc/shadow
+echo ""
 
-echo "--- 4. CONTROL DE ACCESO (ACL): PERMISO EXCLUSIVO AL USUARIO 'auditor' ---"
+echo "========================================================================"
+echo " 3. LISTA DE CONTROL DE ACCESO (ACL) PARA EL USUARIO 'auditor'"
+echo "========================================================================"
 ARCHIVO="/tmp/reporte_confidencial.txt"
 echo "DATOS SECRETOS DEL SERVIDOR RED HAT" > $ARCHIVO
+# 'chmod 600' cierra el archivo: solo el dueno puede leer y escribir; el resto no tiene permisos
 chmod 600 $ARCHIVO
+
+echo "-> Otorgando permiso de lectura SOLO a 'auditor' mediante ACL (setfacl):"
+# 'setfacl -m u:auditor:r--' agrega un permiso de lectura exclusivo para 'auditor'
 setfacl -m u:auditor:r-- $ARCHIVO
+# 'ls -l' muestra un signo '+' al final de los permisos indicando que tiene una ACL activa
+ls -l $ARCHIVO
+# 'getfacl' muestra el detalle de la ACL aplicada
 getfacl $ARCHIVO
+echo "-> Probando leer el archivo con el usuario 'auditor':"
 sudo su - auditor -c "cat $ARCHIVO"
-
-ssh student@serverb "pkill -f 'http.server $PUERTO'; sudo firewall-cmd --remove-port=${PUERTO}/tcp >/dev/null 2>&1" 2>/dev/null
 rm -f $ARCHIVO
-```
+echo ""
 
----
+echo "========================================================================"
+echo " 4. INTEGRIDAD CON HASH SHA-256 ANTE MODIFICACION DE 'pagos_empresa.sh'"
+echo "========================================================================"
+# Nos aseguramos de que pagos_empresa.sh este sano y con permisos 750
+sed -i '/VIRUS/d' pagos_empresa.sh
+chmod 750 pagos_empresa.sh
 
-### 3.3 Opción 2: `opcion2_local_completo.sh` (Demostración en un solo servidor + Comprobador de Integridad Hash)
-
-Ideal para ejecutar en una única máquina virtual Red Hat sin depender de servidores externos: incluye auditoría de puertos (`ss -tuln`), Firewall (`firewall-cmd`), creación del usuario `auditor` (`/etc/shadow`), asignación de ACL (`setfacl`/`getfacl`) y el **Comprobador de Integridad Anti-Virus (`sha256sum -c`)** sobre `pagos_empresa.sh`.
-
-```bash
-#!/bin/bash
-# ==============================================================================
-# UNIDAD 6 - OPCION 2: DEMOSTRACION LOCAL COMPLETA EN UN SOLO SERVIDOR RED HAT
-# ==============================================================================
-
-echo "--- 1. PUERTOS EN ESCUCHA (ss -tuln) Y REGLAS DE FIREWALL (firewall-cmd) ---"
-ss -tuln | head -n 8
-sudo firewall-cmd --add-port=8080/tcp
-sudo firewall-cmd --remove-port=8080/tcp
-
-echo "--- 2. CREAR USUARIO ('auditor') Y VER SU HASH + SALT EN /etc/shadow ---"
-sudo useradd -m auditor 2>/dev/null
-echo "auditor:RedHat2026" | sudo chpasswd
-sudo grep "^auditor:" /etc/shadow
-
-echo "--- 3. LISTA DE CONTROL DE ACCESO (ACL) PARA EL USUARIO AUTORIZADO ---"
-ARCHIVO="/tmp/reporte_confidencial.txt"
-echo "DATOS SECRETOS DEL SERVIDOR RED HAT" > $ARCHIVO
-chmod 600 $ARCHIVO
-setfacl -m u:auditor:r-- $ARCHIVO
-getfacl $ARCHIVO
-rm -f $ARCHIVO
-
-echo "--- 4. COMPROBADOR DE INTEGRIDAD ANTI-VIRUS (HASH SHA-256 EN 'sumacomp.txt') ---"
+echo "-> 4.1 Guardamos la huella digital oficial (SHA-256) de pagos_empresa.sh sano:"
+# 'sha256sum' calcula el resumen de 256 bits del archivo original y lo guarda en 'sumacomp.txt'
 sha256sum pagos_empresa.sh > sumacomp.txt
-sha256sum -c sumacomp.txt && ./pagos_empresa.sh
+cat sumacomp.txt
+echo ""
 
+echo "-> 4.2 Ejecucion normal (verificando la huella antes de correr):"
+# 'sha256sum -c' recalcula la huella actual y la compara con sumacomp.txt; si da OK, ejecuta el script
+if sha256sum -c sumacomp.txt; then
+    echo "[AUTORIZADO]: La huella coincide. Ejecutando pagos_empresa.sh:"
+    ./pagos_empresa.sh
+fi
+echo ""
+
+echo "-> 4.3 EL PROBLEMA: Un intruso/virus agrega una linea maliciosa a pagos_empresa.sh:"
 echo 'echo "[VIRUS]: Robando contrasenas..."' >> pagos_empresa.sh
+echo "Ultima linea agregada al archivo: $(tail -n 1 pagos_empresa.sh)"
+echo ""
+
+echo "-> 4.4 LA SOLUCION: El comprobador detecta que el Hash cambio y bloquea la ejecucion:"
 if sha256sum -c sumacomp.txt; then
     ./pagos_empresa.sh
 else
-    echo "[BLOQUEADO]: PELIGRO! El Hash SHA-256 no coincide. Ejecucion cancelada!"
+    echo "[BLOQUEADO]: La huella SHA-256 NO coincide. El archivo fue modificado y su ejecucion se cancelo."
 fi
+echo ""
+
+echo "-> 4.5 Restaurando el archivo original y limpiando el entorno:"
+# Quitamos la linea maliciosa con 'sed', borramos sumacomp.txt y volvemos a dejar abierto el puerto en servera
 sed -i '/VIRUS/d' pagos_empresa.sh
 rm -f sumacomp.txt
-```
+ssh student@servera "echo student | sudo -S firewall-cmd --add-port=${PUERTO}/tcp >/dev/null 2>&1" 2>/dev/null
+echo "[OK]: Archivo pagos_empresa.sh restaurado y entorno limpio."
+`
 
 ---
 

@@ -53,8 +53,10 @@ Dentro de cada carpeta de unidad vas a encontrar siempre la misma lógica ordena
 
 ### 🔹 1. `unidad_1/` — Introducción a los Sistemas Operativos
 - **Scripts ejecutables:**
-  - [`sync_service.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_1/sync_service.sh): Script que intenta abrir `/tmp/os_data_input.txt` y finaliza con `exit 101` si no existe.
-  - [`audit_syscalls.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_1/audit_syscalls.sh): Script auditor que ejecuta `strace` sobre el servicio, filtra las llamadas al sistema y explica los anillos de privilegio (Modo Usuario vs. Modo Kernel).
+  - [`sync_service.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_1/sync_service.sh): Script que intenta leer `/etc/secure_app/transactions.dat` y finaliza con `exit 101` si no existe.
+  - [`audit_syscalls.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_1/audit_syscalls.sh): Script auditor que ejecuta `strace` sobre el servicio y filtra la llamada al sistema `faccessat2 = -1 ENOENT`.
+  - [`reparar_servicio.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_1/reparar_servicio.sh): Crea `/etc/secure_app/transactions.dat` con permisos `644` y verifica que el servicio finalice con código `0`.
+  - [`restaurar_falla.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_1/restaurar_falla.sh): Restaura el estado original con la falla para repetir la demostración.
 - **Documentación y Teoría:**
   - [`DOCUMENTACION_UNIDAD_1.md`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_1/DOCUMENTACION_UNIDAD_1.md) y `Paso a paso Unidad 1.pdf`.
   - `Archivos de Unidad/`: `Unidad 1.pdf`.
@@ -107,11 +109,10 @@ Dentro de cada carpeta de unidad vas a encontrar siempre la misma lógica ordena
 
 ---
 
-### 🔹 6. `unidad_6/` — Seguridad en Sistemas Operativos (2 Opciones de Laboratorio)
+### 🔹 6. `unidad_6/` — Seguridad en Sistemas Operativos
 - **Scripts ejecutables:**
-  - [`ejecutar_tpo.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/ejecutar_tpo.sh): Menú selector que permite correr cualquiera de las 2 opciones preparadas para mostrar al profesor:
-  - [`opcion1_servers_remotos.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/opcion1_servers_remotos.sh): **Opción 1 (Multi-servidor `servera` y `serverb`):** Prueba conectividad (`ping`), bloquea el puerto `8080/tcp` en el Firewall de `servera` (`firewall-cmd`), lo abre en `serverb`, crea el usuario `auditor` mostrando su **Hash + Salt en `/etc/shadow`** y le da acceso exclusivo con **ACL (`setfacl`/`getfacl`)**.
-  - [`opcion2_local_completo.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/opcion2_local_completo.sh): **Opción 2 (En un solo servidor):** Ejecuta la demostración de puertos (`ss -tuln`), Firewall (`firewall-cmd`), usuario `auditor` (`/etc/shadow`), permisos **ACL** y el **Comprobador de Integridad Anti-Virus (`sha256sum -c`)** sobre [`pagos_empresa.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/pagos_empresa.sh).
+  - [`ejecutar_tpo.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/ejecutar_tpo.sh): Script único que demuestra en orden las 4 capas de seguridad: conectividad y Firewall (`firewall-cmd`) entre `servera` (puerto 8080 bloqueado) y `serverb` (puerto 8080 abierto), creación del usuario `auditor` mostrando su **Hash + Salt en `/etc/shadow`**, permisos exclusivos con **ACL (`setfacl`/`getfacl`)** y el **Comprobador de Integridad Anti-Virus (`sha256sum -c`)**.
+  - [`pagos_empresa.sh`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/pagos_empresa.sh): Script crítico de transferencia de sueldos protegido con permisos `750` y huella SHA-256.
 - **Carpeta `Documentacion/`:**
   - [`DOCUMENTACION_UNIDAD_6.md`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/Documentacion/DOCUMENTACION_UNIDAD_6.md) | [`PASO_A_PASO_UNIDAD_6.md`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/Documentacion/PASO_A_PASO_UNIDAD_6.md) | [`SPEECH_DEFENSA_UNIDAD_6.md`](file:///home/lucas/Escritorio/sistemas-operativos/unidad_6/Documentacion/SPEECH_DEFENSA_UNIDAD_6.md)
 - **Carpeta `Archivos de unidad/`:**

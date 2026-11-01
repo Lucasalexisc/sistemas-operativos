@@ -119,9 +119,11 @@ El ejercicio se compone de dos scripts de Shell Bash diseñados para evidenciar 
 
 ### 3.1 Estructura del Directorio de la Unidad 1
 ```text
-Unidad 1/
-├── sync_service.sh           # Servicio empresarial simulado (falla con error críptico)
+unidad_1/
+├── sync_service.sh           # Servicio empresarial simulado (falla con error críptico 101)
 ├── audit_syscalls.sh         # Script de auditoría e intercepción con strace
+├── reparar_servicio.sh       # Script de solución: crea /etc/secure_app/transactions.dat y permisos 644
+├── restaurar_falla.sh        # Script para volver a dejar el servidor con la falla original
 ├── auditoria_archivos.log    # Registro generado con las llamadas interceptadas
 └── DOCUMENTACION_UNIDAD_1.md # Documento técnico oficial del ejercicio
 ```
@@ -359,9 +361,16 @@ La causa raíz es un fallo de configuración del sistema de archivos en el siste
 
 ---
 
-### 5.4 Solución Definitiva y Validación de la Corrección
+### 5.4 Solución Definitiva (`reparar_servicio.sh`) y Validación de la Corrección
 
-Para solucionar el problema en el entorno de Red Hat sin alterar la lógica de negocio, se debe crear el directorio y el archivo con los permisos adecuados:
+Para solucionar el problema de forma automatizada en el entorno de Red Hat sin alterar la lógica de negocio del servicio, se ejecuta el script `./reparar_servicio.sh` (y opcionalmente `./restaurar_falla.sh` para repetir la demostración):
+
+```bash
+# Ejecutar el script de solución incluido en unidad_1:
+./reparar_servicio.sh
+```
+
+Internamente, `reparar_servicio.sh` crea el directorio y el archivo con los permisos adecuados y comprueba con `strace` que la llamada al sistema devuelve `0`:
 
 ```bash
 # 1. Crear el directorio contenedor con privilegios de administrador
