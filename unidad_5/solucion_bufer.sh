@@ -1,9 +1,11 @@
 #!/bin/bash
 # ==============================================================================
-# SOLUCION - UNIDAD 5: reemplazar la escritura de a 1 byte por escritura con bufer
-#   Problema: sin_bufer.c hace 100.000 llamadas a write() (una por letra).
-#   Solucion: con_bufer.c junta 4000 letras en memoria y escribe en 25 llamadas.
-# Uso: ./solucion_bufer.sh
+# SOLUCION - UNIDAD 5 (solucion_bufer.sh)
+#   Problema: sin_bufer.c realizaba 100.001 llamadas a write() (1 byte por viaje),
+#             saturando la CPU con cambios de modo hacia el Kernel.
+#   Solucion: ejecutar con_bufer.c (bufer de 4.000 bytes en RAM), verificando que
+#             el archivo final tenga exactamente los 100.000 bytes pero realizando
+#             solo 26 llamadas al sistema write (99,97% menos de syscalls).
 # ==============================================================================
 
 if ! command -v gcc >/dev/null 2>&1 || ! command -v strace >/dev/null 2>&1; then
@@ -31,6 +33,7 @@ echo ""
 echo "============================================================"
 echo " 3. VERIFICANDO QUE EL ARCHIVO TIENE LOS 100.000 BYTES"
 echo "============================================================"
+# 'stat -c %s' obtiene el tamano exacto en bytes del archivo generado en disco
 TAMANO=$(stat -c %s salida_rapida.txt)
 echo "Tamano de salida_rapida.txt: $TAMANO bytes"
 echo ""
@@ -38,8 +41,10 @@ echo ""
 echo "============================================================"
 echo " 4. CONTANDO LAS LLAMADAS AL SISTEMA 'write' CON STRACE"
 echo "============================================================"
+# Guardamos la tabla estadistica de strace en 'conteo_write.txt' y la mostramos en pantalla
 strace -c -e trace=write -o conteo_write.txt ./con_bufer > /dev/null
 cat conteo_write.txt
+# Con 'awk' extraemos la 4ta columna (calls) de la fila correspondiente a 'write'
 LLAMADAS=$(awk '$NF=="write" {print $4}' conteo_write.txt)
 echo ""
 
@@ -53,4 +58,5 @@ else
     echo "[RESULTADO]: El archivo no tiene el tamano esperado ($TAMANO bytes)."
 fi
 
+# Limpiamos los archivos temporales generados en la prueba
 rm -f salida_rapida.txt conteo_write.txt
